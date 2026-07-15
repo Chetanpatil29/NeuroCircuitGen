@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeuroCircuitGen</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    font-family:'Poppins',sans-serif;
+
+    background:#0f172a;
+
+    color:white;
+
+    min-height:100vh;
+}
+
+.container{
+
+    width:95%;
+
+    max-width:1600px;
+
+    margin:auto;
+
+    padding:30px;
+}
+
+.header{
+
+    text-align:center;
+
+    margin-bottom:30px;
+}
+
+.header h1{
+
+    font-size:52px;
+
+    color:#38bdf8;
+
+    margin-bottom:10px;
+}
+
+.header p{
+
+    color:#94a3b8;
+
+    font-size:18px;
+}
+
+.status{
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+    font-size:14px;
+
+    color:#22c55e;
+}
+
+.prompt-card{
+
+    background:#1e293b;
+
+    border-radius:20px;
+
+    padding:20px;
+
+    margin-bottom:25px;
+}
+
+.prompt-card h2{
+
+    margin-bottom:15px;
+
+    color:#38bdf8;
+}
+
+textarea{
+
+    width:100%;
+
+    height:90px;
+
+    border:none;
+
+    outline:none;
+
+    resize:none;
+
+    border-radius:12px;
+
+    padding:15px;
+
+    background:#0f172a;
+
+    color:white;
+
+    font-size:16px;
+}
+
+.button-row{
+
+    display:flex;
+
+    gap:15px;
+
+    margin-top:15px;
+}
+
+button{
+
+    padding:12px 25px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#2563eb;
+
+    color:white;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    transition:0.3s;
+}
+
+button:hover{
+
+    background:#1d4ed8;
+}
+
+.main-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:25px;
+}
+
+.card{
+
+    background:#1e293b;
+
+    border-radius:20px;
+
+    padding:20px;
+
+    min-height:600px;
+}
+
+.card h2{
+
+    margin-bottom:15px;
+
+    color:#38bdf8;
+}
+
+.code-toolbar{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    margin-bottom:10px;
+}
+
+#output{
+
+    background:#0f172a;
+
+    border-radius:12px;
+
+    padding:20px;
+
+    min-height:500px;
+
+    overflow:auto;
+
+    white-space:pre-wrap;
+
+    font-family:Consolas, monospace;
+
+    color:#67e8f9;
+
+    line-height:1.6;
+}
+
+#circuitImage{
+
+    width:100%;
+
+    border-radius:12px;
+
+    background:white;
+
+    padding:20px;
+
+    min-height:500px;
+
+    object-fit:contain;
+}
+
+.footer{
+
+    text-align:center;
+
+    margin-top:30px;
+
+    color:#64748b;
+}
+
+@media(max-width:1000px){
+
+    .main-grid{
+
+        grid-template-columns:1fr;
+    }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>NeuroCircuitGen</h1>
+
+        <p>
+            AI-Based Verilog RTL & Circuit Diagram Generation System
+        </p>
+
+    </div>
+
+    <div id="status" class="status">
+        Backend Connected
+    </div>
+
+    <div class="prompt-card">
+
+        <h2>Enter Prompt</h2>
+
+        <textarea
+            id="prompt"
+            placeholder="Example: Generate an AND gate"
+        ></textarea>
+
+        <div class="button-row">
+
+            <button onclick="generateCode()">
+                Generate
+            </button>
+
+            <button onclick="clearAll()">
+                Clear
+            </button>
+
+        </div>
+
+    </div>
+
+    <div class="main-grid">
+
+        <div class="card">
+
+            <h2>Generated Verilog RTL</h2>
+
+            <div class="code-toolbar">
+
+                <button onclick="copyCode()">
+                    Copy RTL
+                </button>
+
+            </div>
+
+            <pre id="output">
+Your generated RTL will appear here...
+            </pre>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Circuit Diagram</h2>
+
+            <img
+                id="circuitImage"
+                src=""
+                alt="Circuit Diagram"
+            >
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+
+        NeuroCircuitGen © 2026
+
+    </div>
+
+</div>
+
+<script>
+
+async function generateCode(){
+
+    const prompt =
+        document.getElementById("prompt").value.trim();
+
+    const output =
+        document.getElementById("output");
+
+    const image =
+        document.getElementById("circuitImage");
+
+    const status =
+        document.getElementById("status");
+
+    if(prompt===""){
+
+        alert("Please enter a prompt.");
+
+        return;
+    }
+
+    output.textContent =
+        "Generating Verilog RTL...";
+
+    status.textContent =
+        "Generating...";
+
+    try{
+
+        const response = await fetch(
+
+            "http://127.0.0.1:5000/generate",
+
+            {
+
+                method:"POST",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify({
+                    prompt:prompt
+                })
+            }
+        );
+
+        const data =
+            await response.json();
+
+        output.textContent =
+            data.generated_verilog ||
+            "No output generated";
+
+        if(data.circuit_image){
+
+            image.src =
+                "http://127.0.0.1:5000" +
+                data.circuit_image +
+                "?t=" +
+                new Date().getTime();
+        }
+
+        status.textContent =
+            "Generation Successful";
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        status.textContent =
+            "Backend Connection Failed";
+
+        output.textContent =
+            "Unable to connect to Flask backend.";
+    }
+}
+
+function copyCode(){
+
+    const text =
+        document.getElementById("output").textContent;
+
+    navigator.clipboard.writeText(text);
+
+    alert("RTL copied successfully.");
+}
+
+function clearAll(){
+
+    document.getElementById("prompt").value="";
+
+    document.getElementById("output").textContent=
+        "Your generated RTL will appear here...";
+
+    document.getElementById("circuitImage").src="";
+}
+
+document
+.getElementById("prompt")
+.addEventListener(
+
+    "keydown",
+
+    function(event){
+
+        if(
+            event.key==="Enter"
+            &&
+            !event.shiftKey
+        ){
+
+            event.preventDefault();
+
+            generateCode();
+        }
+    }
+);
+
+</script>
+
+</body>
+
+</html>
